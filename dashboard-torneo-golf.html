@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Los Santos · Torneo 2026/27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fairway-900:#0F2A1D; --fairway-800:#173A28; --fairway-700:#1F5A3A; --fairway-600:#2E7D4F; --fairway-100:#E3EFE6;
+  --brass:#B8893B; --brass-soft:#F3E7CC; --brass-ink:#6F4F14;
+  --paper:#F6F3EA; --card:#FFFFFF; --ink:#14201A; --muted:#55645B; --line:#DDD8C8;
+  --sand:#E9E2CC; --danger:#B3261E; --ok:#1F7A45;
+  --prem:#8A5F0F; --prem-bg:#F6E8C6;
+  --elite:#0F2A1D; --elite-bg:#D5E6DA;
+  --adv:#0F4C75; --adv-bg:#D6E8F5;
+  --radius:14px;
+  --font-display:'Fraunces',Georgia,serif;
+  --font-body:'Barlow',system-ui,sans-serif;
+  --font-num:'Barlow Condensed','Barlow',sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5}
+h1,h2,h3{font-family:var(--font-display);margin:0;line-height:1.15;letter-spacing:-.01em}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px;border-radius:6px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Layout */
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+.side{background:var(--fairway-900);color:#EDF3EE;padding:24px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:28px;
+  background-image:radial-gradient(circle at 0 0,rgba(184,137,59,.18),transparent 55%)}
+.brand{display:flex;gap:12px;align-items:center;padding:0 8px}
+.brand-mark{width:42px;height:42px;border-radius:12px;background:var(--brass);display:grid;place-items:center;color:var(--fairway-900)}
+.brand b{font-family:var(--font-display);font-size:19px;display:block;line-height:1.1}
+.brand span{font-size:13px;color:#B9C9BE}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:#CFDDD3;cursor:pointer;text-align:left;font-weight:500;transition:background .2s,color .2s}
+.nav button:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav button[aria-current="page"]{background:var(--paper);color:var(--fairway-900);font-weight:700}
+.side-foot{margin-top:auto;font-size:13px;color:#A9BBAF;padding:0 8px}
+main{padding:32px clamp(16px,3vw,44px) 64px;max-width:1280px;width:100%}
+.demo-banner{background:var(--brass-soft);border:1px solid #E0CC9A;color:var(--brass-ink);padding:10px 14px;border-radius:10px;font-size:14px;margin-bottom:24px}
+
+.page-head{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+.page-head h1{font-size:clamp(28px,4vw,40px)}
+.page-head p{margin:6px 0 0;color:var(--muted)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:10px;border:1.5px solid var(--fairway-700);background:var(--fairway-700);color:#fff;font-weight:600;cursor:pointer;transition:background .2s,transform .2s}
+.btn:hover{background:var(--fairway-600)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;color:var(--fairway-700)}
+.btn.ghost:hover{background:var(--fairway-100)}
+.btn.gold{background:var(--brass);border-color:var(--brass);color:#1B1405}
+.btn.gold:hover{background:#C99A4A}
+.icon-btn{width:44px;height:44px;display:inline-grid;place-items:center;border:0;background:transparent;border-radius:10px;cursor:pointer;color:var(--muted)}
+.icon-btn:hover{background:var(--sand);color:var(--ink)}
+.icon-btn.danger:hover{background:#F8DAD7;color:var(--danger)}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* Cards & grids */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card h2{font-size:21px;margin-bottom:4px}
+.card .sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.kpi{position:relative;overflow:hidden}
+.kpi .label{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.kpi .value{font-family:var(--font-num);font-size:46px;font-weight:700;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi .hint{font-size:14px;color:var(--muted)}
+.kpi::after{content:"";position:absolute;right:-24px;top:-24px;width:84px;height:84px;border-radius:50%;background:var(--brass-soft)}
+.grid-2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:20px;align-items:start}
+
+/* Tabs */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.tab[aria-selected="true"]{background:var(--fairway-900);border-color:var(--fairway-900);color:#fff}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* Table */
+.table-wrap{overflow-x:auto;border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid #ECE8DA;vertical-align:middle}
+tbody tr:hover{background:#FBF9F2}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.num{font-family:var(--font-num);font-size:20px;font-weight:600}
+.rank{width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;font-family:var(--font-num);font-weight:700;font-size:18px;background:var(--sand)}
+.rank.r1{background:var(--brass);color:#1B1405}
+.rank.r2{background:#D7DAD5}
+.rank.r3{background:#E7C9A6}
+.pname{font-weight:600}
+.psub{font-size:13px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700}
+.chip.Premiere{background:var(--prem-bg);color:var(--prem)}
+.chip.Elite{background:var(--elite-bg);color:var(--elite)}
+.chip.Advanced{background:var(--adv-bg);color:var(--adv)}
+.chip.ok{background:#D9EFE0;color:var(--ok)}
+.chip.next{background:var(--brass-soft);color:var(--brass-ink)}
+.chip.idle{background:var(--sand);color:var(--muted)}
+.empty{padding:32px;text-align:center;color:var(--muted)}
+
+/* Team bars */
+.team-row{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-bottom:16px}
+.team-row b{font-weight:600}
+.team-row .pts{font-family:var(--font-num);font-size:22px;font-weight:700}
+.bar{grid-column:1/-1;height:12px;background:var(--sand);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--fairway-700),var(--fairway-600));border-radius:99px;transition:width .5s ease}
+.team-row:first-child .bar i{background:linear-gradient(90deg,var(--brass),#D8AE62)}
+
+/* Rounds */
+.round-list{display:grid;gap:12px}
+.round{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:16px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.round .date{font-family:var(--font-num);font-size:30px;font-weight:700;line-height:1;text-align:center;min-width:60px}
+.round .date small{display:block;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.round-main{flex:1;min-width:180px}
+.round-main b{display:block;font-family:var(--font-display);font-size:18px}
+
+/* Forms */
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field label{font-weight:600;font-size:14px}
+.field .help{font-size:13px;color:var(--muted)}
+input,select{min-height:44px;width:100%;padding:0 12px;border:1.5px solid #C9C3AF;border-radius:10px;background:#fff}
+input:focus,select:focus{border-color:var(--fairway-600)}
+td input{min-height:40px;max-width:92px;text-align:right;font-family:var(--font-num);font-size:18px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+dialog{border:0;border-radius:18px;padding:0;width:min(520px,94vw);box-shadow:0 30px 80px rgba(15,42,29,.35)}
+dialog::backdrop{background:rgba(15,42,29,.55)}
+.dlg{padding:24px}
+.dlg h2{font-size:24px;margin-bottom:18px}
+.dlg-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:var(--fairway-900);color:#fff;padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:all .25s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.toolbar input{max-width:320px}
+.toolbar select{max-width:200px}
+.rule-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.rule-grid .field{margin:0}
+.switch{display:flex;gap:12px;align-items:center;min-height:44px}
+.switch input{width:22px;height:22px;min-height:0}
+
+@media (max-width:960px){
+  .grid-2{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;inset:auto 0 0 0;height:auto;flex-direction:row;padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:40;border-top:1px solid rgba(255,255,255,.12)}
+  .brand,.side-foot{display:none}
+  .nav{flex-direction:row;width:100%;justify-content:space-around}
+  .nav button{flex-direction:column;gap:2px;font-size:12px;padding:6px 4px;min-height:52px;justify-content:center;text-align:center;flex:1}
+  main{padding-bottom:110px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M8 21V3l9 4-9 4"/><circle cx="8" cy="21" r="1.2"/></svg>
+      </div>
+      <div><b>Los Santos</b><span>Torneo 2026/27</span></div>
+    </div>
+    <nav class="nav" aria-label="Principal" id="nav"></nav>
+    <div class="side-foot">Prototipo de diseño · datos de demostración</div>
+  </aside>
+  <main id="view" tabindex="-1"></main>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- Iconos (SVG inline) ---------- */
+const ICONS={
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><path d="M16 4.5a3.5 3.5 0 010 7M18.5 14.5c1.8.8 3 2.6 3 5.5"/>',
+  shield:'<path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  pencil:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  down:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+  trophy:'<path d="M7 4h10v5a5 5 0 01-10 0zM7 6H4v1a3 3 0 003 3M17 6h3v1a3 3 0 01-3 3M12 14v4M8 21h8"/>'
+};
+const ic=(n)=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
+
+/* ---------- Estado (en memoria; el sistema real usa API + BD) ---------- */
+const CATS=['Premiere','Elite','Advanced'];
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const S={
+  settings:{useHci80:false,points:[25,20,16,13,11,10,9,8,7,6,5,4,3,2,1]},
+  teams:[
+    {id:'t1',name:'Beerdie Guys'},{id:'t2',name:'Slicing N…'},
+    {id:'t3',name:'Chapter 11'},{id:'t4',name:'Little Balls'}
+  ],
+  players:[],rounds:[],results:[]
+};
+(function seed(){
+  const names=['Alejandro R.','Bruno C.','Camila V.','Diego H.','Emilio S.','Fernanda L.','Gael M.','Hugo T.','Irene P.','Joaquín D.','Karla N.','Luis A.'];
+  const hci=[4,6,9,11,13,15,17,19,22,24,27,30];
+  names.forEach((n,i)=>S.players.push({id:'p'+i,name:n,ghin:String(2938200+i*37),hci:hci[i],cat:CATS[Math.floor(i/4)],teamId:'t'+((i%4)+1)}));
+  S.rounds=[
+    {id:'r1',name:'Jornada 1',course:'BCC',date:'2026-08-16'},
+    {id:'r2',name:'Jornada 2',course:'RDM',date:'2026-09-20'},
+    {id:'r3',name:'Jornada 3',course:'COR',date:'2026-10-18'}
+  ];
+  let seedN=7;const rnd=()=>(seedN=(seedN*9301+49297)%233280)/233280;
+  ['r1','r2'].forEach(r=>S.players.forEach(p=>{
+    S.results.push({id:uid(),roundId:r,playerId:p.id,gross:72+p.hci+Math.round(rnd()*9-2),putts:29+Math.round(rnd()*7)});
+  }));
+})();
+
+/* ---------- Cálculos ---------- */
+const hci80=p=>Math.round(p.hci*0.8);
+const hcUsed=p=>S.settings.useHci80?hci80(p):p.hci;
+const teamName=id=>(S.teams.find(t=>t.id===id)||{name:'Sin equipo'}).name;
+const pById=id=>S.players.find(p=>p.id===id);
+
+function roundTable(roundId,cat){
+  const rows=S.results.filter(r=>r.roundId===roundId).map(r=>{
+    const p=pById(r.playerId);if(!p||p.cat!==cat||!r.gross)return null;
+    return {p,gross:+r.gross,putts:+r.putts||0,net:+r.gross-hcUsed(p)};
+  }).filter(Boolean).sort((a,b)=>a.net-b.net||a.putts-b.putts);
+  rows.forEach((r,i)=>r.pts=S.settings.points[i]||0);
+  return rows;
+}
+function standings(cat){
+  const per={};
+  S.players.filter(p=>p.cat===cat).forEach(p=>per[p.id]={p,byRound:{},total:0,best:null});
+  S.rounds.forEach(rd=>roundTable(rd.id,cat).forEach(r=>{
+    const x=per[r.p.id];x.byRound[rd.id]=r.pts;x.total+=r.pts;
+    x.best=x.best===null?r.net:Math.min(x.best,r.net);
+  }));
+  return Object.values(per).sort((a,b)=>b.total-a.total||(a.best??999)-(b.best??999));
+}
+function teamStandings(){
+  const tot={};S.teams.forEach(t=>tot[t.id]=0);
+  CATS.forEach(c=>standings(c).forEach(x=>{if(x.p.teamId in tot)tot[x.p.teamId]+=x.total}));
+  return S.teams.map(t=>({t,total:tot[t.id],n:S.players.filter(p=>p.teamId===t.id).length})).sort((a,b)=>b.total-a.total);
+}
+const fmtDate=d=>{const x=new Date(d+'T12:00:00');return {d:x.getDate(),m:x.toLocaleDateString('es-MX',{month:'short'}).replace('.','')}};
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const roundStatus=rd=>S.results.some(r=>r.roundId===rd.id&&r.gross)?'Con resultados':(rd.date>=todayStr()?'Próxima':'Sin capturar');
+
+/* ---------- Navegación ---------- */
+const VIEWS=[
+  {id:'dash',label:'Resumen',icon:'home'},
+  {id:'players',label:'Jugadores',icon:'users'},
+  {id:'teams',label:'Equipos LIV',icon:'shield'},
+  {id:'rounds',label:'Jornadas',icon:'cal'},
+  {id:'capture',label:'Captura',icon:'edit'},
+  {id:'rules',label:'Reglas',icon:'sliders'}
+];
+let view='dash',tabCat='Premiere',captureRound='r3';
+function renderNav(){
+  document.getElementById('nav').innerHTML=VIEWS.map(v=>
+    `<button data-nav="${v.id}" ${v.id===view?'aria-current="page"':''}>${ic(v.icon)}<span>${v.label}</span></button>`).join('');
+}
+function go(v){view=v;renderNav();render();window.scrollTo({top:0});document.getElementById('view').focus({preventScroll:true})}
+
+/* ---------- Vistas ---------- */
+function head(title,sub,actions=''){return `<div class="page-head"><div><h1>${title}</h1><p>${sub}</p></div><div class="actions">${actions}</div></div>`}
+const demo='<div class="demo-banner"><b>Prototipo.</b> Datos de demostración, no son los de tu hoja. Puedes añadir, editar y borrar para probar el flujo (se reinicia al recargar).</div>';
+
+function vDash(){
+  const played=S.rounds.filter(r=>S.results.some(x=>x.roundId===r.id&&x.gross)).length;
+  const next=S.rounds.filter(r=>r.date>=todayStr()).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  const ts=teamStandings(),max=Math.max(1,...ts.map(t=>t.total));
+  const st=standings(tabCat);
+  const leader=st[0]&&st[0].total?st[0]:null;
+  return head('Resumen del torneo','Clasificación en vivo por categoría y por equipo LIV.',
+    `<button class="btn ghost" data-act="export">${ic('down')}Exportar CSV</button><button class="btn gold" data-nav="capture">${ic('edit')}Capturar resultados</button>`)+demo+`
+  <section class="kpis" aria-label="Indicadores">
+    <div class="card kpi"><div class="label">Jugadores</div><div class="value">${S.players.length}</div><div class="hint">${CATS.map(c=>S.players.filter(p=>p.cat===c).length+' '+c).join(' · ')}</div></div>
+    <div class="card kpi"><div class="label">Equipos LIV</div><div class="value">${S.teams.length}</div><div class="hint">Líder: ${ts[0]&&ts[0].total?esc(ts[0].t.name):'—'}</div></div>
+    <div class="card kpi"><div class="label">Jornadas jugadas</div><div class="value">${played}<span style="font-size:24px;color:var(--muted)">/${S.rounds.length}</span></div><div class="hint">${next?'Próxima: '+esc(next.course)+' · '+next.date:'Sin jornadas próximas'}</div></div>
+    <div class="card kpi"><div class="label">Líder ${tabCat}</div><div class="value" style="font-size:30px;padding-top:10px">${leader?esc(leader.p.name):'—'}</div><div class="hint">${leader?leader.total+' pts':'Aún sin puntos'}</div></div>
+  </section>
+  <div class="grid-2">
+    <section class="card" aria-labelledby="h-lb">
+      <h2 id="h-lb">Clasificación individual</h2><p class="sub">Puntos acumulados por jornada. Desempate: mejor neto.</p>
+      <div class="tabs" role="tablist" aria-label="Categoría">${CATS.map(c=>`<button class="tab" role="tab" aria-selected="${c===tabCat}" data-tab="${c}"><span class="dot" style="background:var(--${c==='Premiere'?'prem':c==='Elite'?'elite':'adv'})"></span>${c}</button>`).join('')}</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Jugador</th>${S.rounds.map(r=>`<th class="num">${esc(r.course)}</th>`).join('')}<th class="num">Total</th></tr></thead>
+        <tbody>${st.length?st.map((x,i)=>`<tr><td><span class="rank r${i+1}">${i+1}</span></td>
+          <td><div class="pname">${esc(x.p.name)}</div><div class="psub">${esc(teamName(x.p.teamId))} · HCI ${x.p.hci}</div></td>
+          ${S.rounds.map(r=>`<td class="num">${x.byRound[r.id]??'<span style="color:#B9B4A2">–</span>'}</td>`).join('')}
+          <td class="num"><b>${x.total}</b></td></tr>`).join(''):`<tr><td colspan="9" class="empty">Aún no hay jugadores en esta categoría.</td></tr>`}</tbody>
+      </table></div>
+    </section>
+    <section class="card" aria-labelledby="h-liv">
+      <h2 id="h-liv">Copa LIV por equipos</h2><p class="sub">Suma de puntos de los integrantes.</p>
+      ${ts.map(x=>`<div class="team-row"><b>${esc(x.t.name)} <span class="psub">· ${x.n} jug.</span></b><span class="pts">${x.total}</span><div class="bar" role="img" aria-label="${esc(x.t.name)}: ${x.total} puntos"><i style="width:${Math.round(x.total/max*100)}%"></i></div></div>`).join('')}
+    </section>
+  </div>`;
+}
+
+function vPlayers(q='',cat=''){
+  const list=S.players.filter(p=>(!cat||p.cat===cat)&&(!q||(p.name+p.ghin).toLowerCase().includes(q.toLowerCase())));
+  return head('Jugadores','Base principal: GHIN, handicap y categoría.',`<button class="btn" data-act="new-player">${ic('plus')}Nuevo jugador</button>`)+`
+  <div class="toolbar"><label class="sr-only" for="q">Buscar</label><input id="q" type="search" placeholder="Buscar por nombre o GHIN" value="${esc(q)}">
+    <label class="sr-only" for="fcat">Categoría</label><select id="fcat"><option value="">Todas las categorías</option>${CATS.map(c=>`<option ${c===cat?'selected':''}>${c}</option>`).join('')}</select></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Jugador</th><th>GHIN</th><th class="num">HCI</th><th class="num">HCI 80%</th><th>Categoría</th><th>Equipo</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+    <tbody>${list.length?list.map(p=>`<tr><td class="pname">${esc(p.name)}</td><td>${esc(p.ghin)}</td><td class="num">${p.hci}</td><td class="num">${hci80(p)}</td>
+      <td><span class="chip ${p.cat}">${p.cat}</span></td><td>${esc(teamName(p.teamId))}</td>
+      <td style="white-space:nowrap"><button class="icon-btn" data-act="edit-player" data-id="${p.id}" aria-label="Editar ${esc(p.name)}">${ic('pencil')}</button><button class="icon-btn danger" data-act="del-player" data-id="${p.id}" aria-label="Eliminar ${esc(p.name)}">${ic('trash')}</button></td></tr>`).join(''):`<tr><td colspan="7" class="empty">Sin resultados.</td></tr>`}</tbody>
+  </table></div></div>`;
+}
+
+function vTeams(){
+  return head('Equipos LIV','Cada equipo mezcla jugadores de distintas categorías.',`<button class="btn" data-act="new-team">${ic('plus')}Nuevo equipo</button>`)+`
+  <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">${S.teams.map(t=>{
+    const m=S.players.filter(p=>p.teamId===t.id);
+    return `<section class="card"><div style="display:flex;justify-content:space-between;align-items:start;gap:8px"><h2>${esc(t.name)}</h2>
+      <div><button class="icon-btn" data-act="edit-team" data-id="${t.id}" aria-label="Renombrar ${esc(t.name)}">${ic('pencil')}</button><button class="icon-btn danger" data-act="del-team" data-id="${t.id}" aria-label="Eliminar ${esc(t.name)}">${ic('trash')}</button></div></div>
+      <p class="sub">${m.length} integrantes</p>
+      ${m.length?m.map(p=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid #ECE8DA"><span class="pname">${esc(p.name)}</span><span class="chip ${p.cat}">${p.cat}</span></div>`).join(''):'<div class="empty">Sin jugadores. Asígnalos desde “Jugadores”.</div>'}</section>`}).join('')}</div>`;
+}
+
+function vRounds(){
+  return head('Jornadas','Calendario del torneo y estado de captura.',`<button class="btn" data-act="new-round">${ic('plus')}Nueva jornada</button>`)+`
+  <div class="round-list">${S.rounds.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(r=>{
+    const f=fmtDate(r.date),s=roundStatus(r),n=S.results.filter(x=>x.roundId===r.id&&x.gross).length;
+    return `<div class="round"><div class="date"><small>${f.m}</small>${f.d}</div>
+      <div class="round-main"><b>${esc(r.name)} · ${esc(r.course)}</b><span class="psub">${n} de ${S.players.length} jugadores con score</span></div>
+      <span class="chip ${s==='Con resultados'?'ok':s==='Próxima'?'next':'idle'}">${s}</span>
+      <div class="actions"><button class="btn ghost" data-act="open-capture" data-id="${r.id}">${ic('edit')}Capturar</button>
+      <button class="icon-btn" data-act="edit-round" data-id="${r.id}" aria-label="Editar ${esc(r.name)}">${ic('pencil')}</button>
+      <button class="icon-btn danger" data-act="del-round" data-id="${r.id}" aria-label="Eliminar ${esc(r.name)}">${ic('trash')}</button></div></div>`}).join('')||'<div class="card empty">Aún no hay jornadas.</div>'}</div>`;
+}
+
+function captureRows(){
+  const rd=S.rounds.find(r=>r.id===captureRound);
+  if(!rd)return '<tr><td colspan="7" class="empty">Crea una jornada primero.</td></tr>';
+  const pts={};CATS.forEach(c=>roundTable(rd.id,c).forEach(r=>pts[r.p.id]=r));
+  return S.players.slice().sort((a,b)=>CATS.indexOf(a.cat)-CATS.indexOf(b.cat)||a.name.localeCompare(b.name)).map(p=>{
+    const res=S.results.find(r=>r.roundId===rd.id&&r.playerId===p.id)||{};const t=pts[p.id];
+    return `<tr data-pid="${p.id}"><td><div class="pname">${esc(p.name)}</div><div class="psub"><span class="chip ${p.cat}">${p.cat}</span> HC ${hcUsed(p)}</div></td>
+      <td class="num"><label class="sr-only" for="g${p.id}">Golpes de ${esc(p.name)}</label><input id="g${p.id}" inputmode="numeric" type="number" min="40" max="200" data-f="gross" value="${res.gross??''}"></td>
+      <td class="num"><label class="sr-only" for="u${p.id}">Putts de ${esc(p.name)}</label><input id="u${p.id}" inputmode="numeric" type="number" min="10" max="80" data-f="putts" value="${res.putts??''}"></td>
+      <td class="num" data-c="net">${t?t.net:'–'}</td><td class="num" data-c="pos">${t?([...roundTable(rd.id,p.cat)].findIndex(x=>x.p.id===p.id)+1):'–'}</td><td class="num" data-c="pts"><b>${t?t.pts:'–'}</b></td></tr>`}).join('');
+}
+function vCapture(){
+  return head('Captura de resultados','Escribe golpes y putts; el neto, la posición y los puntos se calculan solos.')+`
+  <div class="toolbar"><label for="cr" class="sr-only">Jornada</label><select id="cr">${S.rounds.map(r=>`<option value="${r.id}" ${r.id===captureRound?'selected':''}>${esc(r.name)} · ${esc(r.course)} (${r.date})</option>`).join('')}</select></div>
+  <div class="card"><div class="table-wrap"><table><thead><tr><th>Jugador</th><th class="num">Golpes</th><th class="num">Putts</th><th class="num">Neto</th><th class="num">Lugar</th><th class="num">Puntos</th></tr></thead>
+  <tbody id="capBody">${captureRows()}</tbody></table></div></div>`;
+}
+
+function vRules(){
+  const pts=S.settings.points;
+  return head('Reglas de puntos','Configura cómo se reparten los puntos sin tocar código.')+`
+  <section class="card" style="margin-bottom:20px"><h2>Handicap aplicado</h2><p class="sub">Define con qué valor se calcula el neto (golpes − handicap).</p>
+    <label class="switch"><input type="checkbox" id="use80" ${S.settings.useHci80?'checked':''}><span>Usar HCI al 80% en lugar del HCI completo</span></label></section>
+  <section class="card"><h2>Puntos por lugar</h2><p class="sub">Valores de ejemplo. Edítalos según la hoja REGLA_PUNTOS del torneo.</p>
+    <div class="rule-grid">${pts.map((v,i)=>`<div class="field"><label for="pt${i}">Lugar ${i+1}</label><input id="pt${i}" type="number" min="0" data-pt="${i}" value="${v}"></div>`).join('')}</div></section>`;
+}
+
+function render(){
+  const m=document.getElementById('view');
+  m.innerHTML={dash:vDash,players:()=>vPlayers(),teams:vTeams,rounds:vRounds,capture:vCapture,rules:vRules}[view]();
+}
+
+/* ---------- Diálogos ---------- */
+const dlg=document.getElementById('dlg'),dlgBody=document.getElementById('dlgBody');
+function openDlg(html,onSubmit){
+  dlgBody.innerHTML=html;dlg.showModal();
+  const f=dlgBody.querySelector('form');
+  f.addEventListener('submit',e=>{e.preventDefault();onSubmit(Object.fromEntries(new FormData(f)));dlg.close()});
+  dlgBody.querySelector('[data-close]').onclick=()=>dlg.close();
+  const first=f.querySelector('input,select');first&&first.focus();
+}
+const actionsHtml=(label='Guardar')=>`<div class="dlg-actions"><button type="button" class="btn ghost" data-close>Cancelar</button><button class="btn">${label}</button></div>`;
+function playerForm(p={}){
+  openDlg(`<h2>${p.id?'Editar jugador':'Nuevo jugador'}</h2><form>
+    <div class="field"><label for="f-name">Nombre</label><input id="f-name" name="name" required value="${esc(p.name)}"></div>
+    <div class="row2"><div class="field"><label for="f-ghin">GHIN</label><input id="f-ghin" name="ghin" inputmode="numeric" value="${esc(p.ghin)}"></div>
+    <div class="field"><label for="f-hci">HCI</label><input id="f-hci" name="hci" type="number" step="0.1" min="0" max="54" required value="${p.hci??''}"><span class="help">El 80% se calcula solo.</span></div></div>
+    <div class="row2"><div class="field"><label for="f-cat">Categoría</label><select id="f-cat" name="cat">${CATS.map(c=>`<option ${c===p.cat?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="field"><label for="f-team">Equipo LIV</label><select id="f-team" name="teamId"><option value="">Sin equipo</option>${S.teams.map(t=>`<option value="${t.id}" ${t.id===p.teamId?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div></div>
+    ${actionsHtml()}</form>`,d=>{
+    const o={name:d.name.trim(),ghin:d.ghin.trim(),hci:+d.hci,cat:d.cat,teamId:d.teamId};
+    if(p.id)Object.assign(p,o);else S.players.push({id:uid(),...o});
+    toast('Jugador guardado');render();
+  });
+}
+function teamForm(t={}){
+  openDlg(`<h2>${t.id?'Renombrar equipo':'Nuevo equipo'}</h2><form><div class="field"><label for="f-tn">Nombre del equipo</label><input id="f-tn" name="name" required value="${esc(t.name)}"></div>${actionsHtml()}</form>`,d=>{
+    if(t.id)t.name=d.name.trim();else S.teams.push({id:uid(),name:d.name.trim()});toast('Equipo guardado');render();});
+}
+function roundForm(r={}){
+  openDlg(`<h2>${r.id?'Editar jornada':'Nueva jornada'}</h2><form>
+    <div class="field"><label for="f-rn">Nombre</label><input id="f-rn" name="name" required value="${esc(r.name||'Jornada '+(S.rounds.length+1))}"></div>
+    <div class="row2"><div class="field"><label for="f-rc">Campo</label><input id="f-rc" name="course" required value="${esc(r.course)}"></div>
+    <div class="field"><label for="f-rd">Fecha</label><input id="f-rd" name="date" type="date" required value="${esc(r.date)}"></div></div>${actionsHtml()}</form>`,d=>{
+    if(r.id)Object.assign(r,d);else S.rounds.push({id:uid(),...d});toast('Jornada guardada');render();});
+}
+
+/* ---------- Eventos ---------- */
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2200)}
+function exportCsv(){
+  const rows=[['Categoria','Posicion','Jugador','Equipo','Puntos']];
+  CATS.forEach(c=>standings(c).forEach((x,i)=>rows.push([c,i+1,x.p.name,teamName(x.p.teamId),x.total])));
+  const blob=new Blob([rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='clasificacion.csv';a.click();URL.revokeObjectURL(a.href);
+}
+document.addEventListener('click',e=>{
+  const n=e.target.closest('[data-nav]');if(n){go(n.dataset.nav);return}
+  const tb=e.target.closest('[data-tab]');if(tb){tabCat=tb.dataset.tab;render();return}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const id=b.dataset.id,a=b.dataset.act;
+  if(a==='export')exportCsv();
+  if(a==='new-player')playerForm();
+  if(a==='edit-player')playerForm(pById(id));
+  if(a==='del-player'&&confirm('¿Eliminar este jugador y sus resultados?')){S.players=S.players.filter(p=>p.id!==id);S.results=S.results.filter(r=>r.playerId!==id);render();toast('Jugador eliminado')}
+  if(a==='new-team')teamForm();
+  if(a==='edit-team')teamForm(S.teams.find(t=>t.id===id));
+  if(a==='del-team'&&confirm('¿Eliminar equipo? Sus jugadores quedarán sin equipo.')){S.teams=S.teams.filter(t=>t.id!==id);S.players.forEach(p=>{if(p.teamId===id)p.teamId=''});render();toast('Equipo eliminado')}
+  if(a==='new-round')roundForm();
+  if(a==='edit-round')roundForm(S.rounds.find(r=>r.id===id));
+  if(a==='del-round'&&confirm('¿Eliminar jornada y sus resultados?')){S.rounds=S.rounds.filter(r=>r.id!==id);S.results=S.results.filter(r=>r.roundId!==id);render();toast('Jornada eliminada')}
+  if(a==='open-capture'){captureRound=id;go('capture')}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='q'||e.target.id==='fcat'){
+    const q=document.getElementById('q').value,c=document.getElementById('fcat').value;
+    document.getElementById('view').innerHTML=vPlayers(q,c);
+    const el=document.getElementById('q');el.focus();el.setSelectionRange(q.length,q.length);
+  }
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='cr'){captureRound=t.value;render();return}
+  if(t.id==='use80'){S.settings.useHci80=t.checked;toast('Handicap actualizado');return}
+  if(t.dataset.pt!==undefined){S.settings.points[+t.dataset.pt]=Math.max(0,+t.value||0);toast('Regla guardada');return}
+  if(t.dataset.f){
+    const pid=t.closest('tr').dataset.pid;
+    let r=S.results.find(x=>x.roundId===captureRound&&x.playerId===pid);
+    if(!r){r={id:uid(),roundId:captureRound,playerId:pid,gross:'',putts:''};S.results.push(r)}
+    r[t.dataset.f]=t.value===''?'':+t.value;
+    const keep=document.activeElement&&document.activeElement.id;
+    document.getElementById('capBody').innerHTML=captureRows();
+    toast('Guardado');
+  }
+});
+renderNav();render();
+</script>
+</body>
+</html>

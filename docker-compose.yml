@@ -1,0 +1,7 @@
+services:
+  torneo-golf-web:
+    build: .
+    container_name: torneo_los_santos_app
+    ports:
+      - "8080:80"
+    restart: always
