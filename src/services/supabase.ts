@@ -9,8 +9,14 @@ import {
   AppSettings
 } from '../types/tournament';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl =
+  (import.meta.env.VITE_SUPABASE_URL as string) ||
+  (import.meta.env.SUPABASE_URL as string) ||
+  '';
+const supabaseAnonKey =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
+  (import.meta.env.SUPABASE_ANON_KEY as string) ||
+  '';
 
 export const isSupabaseConfigured = (): boolean => {
   return (
