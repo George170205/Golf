@@ -4,6 +4,7 @@ import { Sidebar, NavigationTab } from './components/common/Sidebar';
 import { Navbar } from './components/common/Navbar';
 import { ToastContainer } from './components/common/ToastContainer';
 import { NewTournamentModal } from './components/common/NewTournamentModal';
+import { DbConfigModal } from './components/common/DbConfigModal';
 
 // Views
 import { DashboardView } from './components/views/DashboardView';
@@ -18,6 +19,7 @@ const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavigationTab>('dashboard');
   const [captureRoundId, setCaptureRoundId] = useState<string | undefined>(undefined);
   const [isNewTournamentModalOpen, setIsNewTournamentModalOpen] = useState(false);
+  const [isDbModalOpen, setIsDbModalOpen] = useState(false);
 
   const handleNavigateToCapture = (roundId?: string) => {
     if (roundId) setCaptureRoundId(roundId);
@@ -43,7 +45,10 @@ const AppContent: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="main-content">
-        <Navbar onOpenNewTournamentModal={() => setIsNewTournamentModalOpen(true)} />
+        <Navbar
+          onOpenNewTournamentModal={() => setIsNewTournamentModalOpen(true)}
+          onOpenDbModal={() => setIsDbModalOpen(true)}
+        />
 
         <main className="content-body">
           {currentTab === 'dashboard' && (
@@ -75,6 +80,12 @@ const AppContent: React.FC = () => {
       <NewTournamentModal
         isOpen={isNewTournamentModalOpen}
         onClose={() => setIsNewTournamentModalOpen(false)}
+      />
+
+      {/* Modal para Base de Datos Centralizada */}
+      <DbConfigModal
+        isOpen={isDbModalOpen}
+        onClose={() => setIsDbModalOpen(false)}
       />
 
       {/* Toast Notifications */}

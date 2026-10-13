@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   Tournament,
   Player,
@@ -20,6 +20,20 @@ import {
   INITIAL_LIV_RULES,
   INITIAL_SETTINGS
 } from '../data/initialData';
+import {
+  isSupabaseConfigured,
+  fetchRemoteTournamentData,
+  remoteUpsertPlayer,
+  remoteDeletePlayer,
+  remoteUpsertTeam,
+  remoteDeleteTeam,
+  remoteUpsertRound,
+  remoteDeleteRound,
+  remoteUpsertBulkResults,
+  remoteUpsertPointsRule,
+  remoteUpsertSettings,
+  supabase
+} from '../services/supabase';
 
 interface ToastMessage {
   id: string;
@@ -39,6 +53,7 @@ interface TournamentContextType {
   livRules: PointRule[];
   settings: AppSettings;
   toasts: ToastMessage[];
+  isDbConnected: boolean;
 
   // Actions
   showToast: (message: string, type?: ToastMessage['type']) => void;
@@ -79,6 +94,7 @@ interface TournamentContextType {
   // Backup & Reset
   resetToInitialData: () => void;
   importBackup: (backupData: any) => boolean;
+  refreshFromDatabase: () => Promise<void>;
 }
 
 const STORAGE_KEY = 'torneo_los_santos_golf_state_v1';
@@ -86,7 +102,6 @@ const STORAGE_KEY = 'torneo_los_santos_golf_state_v1';
 const TournamentContext = createContext<TournamentContextType | null>(null);
 
 export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Load state from localStorage or initialize with Excel seed
   const [tournaments, setTournaments] = useState<Tournament[]>(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_tournaments`);
     return saved ? JSON.parse(saved) : INITIAL_TOURNAMENTS;
@@ -133,8 +148,64 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   });
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isDbConnected, setIsDbConnected] = useState<boolean>(isSupabaseConfigured());
 
-  // Sync to localStorage
+  const showToast = useCallback((message: string, type: ToastMessage['type'] = 'success') => {
+    const id = Math.random().toString(36).slice(2, 9);
+    setToasts((prev) => [...prev, { id, type, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3200);
+  }, []);
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // Sync state from remote PostgreSQL database
+  const refreshFromDatabase = useCallback(async () => {
+    if (!isSupabaseConfigured()) return;
+    try {
+      const remote = await fetchRemoteTournamentData();
+      if (remote) {
+        if (remote.tournaments.length > 0) setTournaments(remote.tournaments);
+        if (remote.players.length > 0) setPlayers(remote.players);
+        if (remote.teams.length > 0) setTeams(remote.teams);
+        if (remote.rounds.length > 0) setRounds(remote.rounds);
+        if (remote.results.length > 0) setResults(remote.results);
+        if (remote.pointsRules.length > 0) setPointsRules(remote.pointsRules);
+        if (remote.settings) setSettings(remote.settings);
+        setIsDbConnected(true);
+        showToast('Datos sincronizados con PostgreSQL centralizado', 'info');
+      }
+    } catch (e) {
+      console.warn('No se pudo sincronizar con PostgreSQL:', e);
+    }
+  }, [showToast]);
+
+  // Initial load from PostgreSQL if configured
+  useEffect(() => {
+    if (isSupabaseConfigured()) {
+      refreshFromDatabase();
+
+      // Realtime listener for Postgres changes across devices
+      const client = supabase;
+      if (client) {
+        const channel = client
+          .channel('golf-realtime')
+          .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+            refreshFromDatabase();
+          })
+          .subscribe();
+
+        return () => {
+          client.removeChannel(channel);
+        };
+      }
+    }
+  }, [refreshFromDatabase]);
+
+  // Local storage persistence fallback
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_tournaments`, JSON.stringify(tournaments));
   }, [tournaments]);
@@ -161,7 +232,6 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_settings`, JSON.stringify(settings));
-    // Apply theme class to document root
     if (settings.theme === 'light') {
       document.documentElement.classList.remove('theme-dark');
       document.documentElement.classList.add('theme-light');
@@ -170,18 +240,6 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       document.documentElement.classList.add('theme-dark');
     }
   }, [settings]);
-
-  const showToast = (message: string, type: ToastMessage['type'] = 'success') => {
-    const id = Math.random().toString(36).slice(2, 9);
-    setToasts((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => {
-      removeToast(id);
-    }, 3200);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
 
   const activeTournament =
     tournaments.find((t) => t.id === settings.activeTournamentId) ||
@@ -241,13 +299,21 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       ...data
     };
     setPlayers((prev) => [...prev, newPlayer]);
+    remoteUpsertPlayer(newPlayer, activeTournament.id);
     showToast(`Jugador "${newPlayer.name}" añadido al roster`);
     return newPlayer;
   };
 
   const updatePlayer = (id: string, data: Partial<Player>) => {
     setPlayers((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...data } : p))
+      prev.map((p) => {
+        if (p.id === id) {
+          const updated = { ...p, ...data };
+          remoteUpsertPlayer(updated, activeTournament.id);
+          return updated;
+        }
+        return p;
+      })
     );
     showToast('Jugador actualizado');
   };
@@ -255,7 +321,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const deletePlayer = (id: string) => {
     setPlayers((prev) => prev.filter((p) => p.id !== id));
     setResults((prev) => prev.filter((r) => r.playerId !== id));
-    showToast('Jugador y sus registros eliminados', 'info');
+    remoteDeletePlayer(id);
+    showToast('Jugador eliminado', 'info');
   };
 
   // Teams CRUD
@@ -265,29 +332,44 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       ...data
     };
     setTeams((prev) => [...prev, newTeam]);
+    remoteUpsertTeam(newTeam, activeTournament.id);
     showToast(`Equipo LIV "${newTeam.name}" creado`);
     return newTeam;
   };
 
   const updateTeam = (id: string, data: Partial<Team>) => {
     setTeams((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...data } : t))
+      prev.map((t) => {
+        if (t.id === id) {
+          const updated = { ...t, ...data };
+          remoteUpsertTeam(updated, activeTournament.id);
+          return updated;
+        }
+        return t;
+      })
     );
     showToast('Equipo actualizado');
   };
 
   const deleteTeam = (id: string) => {
     setTeams((prev) => prev.filter((t) => t.id !== id));
-    // Set players of this team to null
     setPlayers((prev) =>
       prev.map((p) => (p.teamId === id ? { ...p, teamId: null, slot: null } : p))
     );
-    showToast('Equipo eliminado. Los integrantes ahora no tienen equipo', 'info');
+    remoteDeleteTeam(id);
+    showToast('Equipo eliminado', 'info');
   };
 
   const assignPlayerToTeam = (playerId: string, teamId: string | null) => {
     setPlayers((prev) =>
-      prev.map((p) => (p.id === playerId ? { ...p, teamId } : p))
+      prev.map((p) => {
+        if (p.id === playerId) {
+          const updated = { ...p, teamId };
+          remoteUpsertPlayer(updated, activeTournament.id);
+          return updated;
+        }
+        return p;
+      })
     );
     showToast('Equipo de jugador actualizado');
   };
@@ -299,13 +381,21 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       ...data
     };
     setRounds((prev) => [...prev, newRound]);
+    remoteUpsertRound(newRound, activeTournament.id);
     showToast(`Jornada "${newRound.name}" añadida al calendario`);
     return newRound;
   };
 
   const updateRound = (id: string, data: Partial<Round>) => {
     setRounds((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, ...data } : r))
+      prev.map((r) => {
+        if (r.id === id) {
+          const updated = { ...r, ...data };
+          remoteUpsertRound(updated, activeTournament.id);
+          return updated;
+        }
+        return r;
+      })
     );
     showToast('Jornada actualizada');
   };
@@ -313,7 +403,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const deleteRound = (id: string) => {
     setRounds((prev) => prev.filter((r) => r.id !== id));
     setResults((prev) => prev.filter((res) => res.roundId !== id));
-    showToast('Jornada y resultados eliminados', 'info');
+    remoteDeleteRound(id);
+    showToast('Jornada eliminada', 'info');
   };
 
   // Results Management
@@ -324,19 +415,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       );
       if (existingIndex >= 0) {
         const updated = [...prev];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          ...data
-        };
+        updated[existingIndex] = { ...updated[existingIndex], ...data };
         return updated;
       }
-      return [
-        ...prev,
-        {
-          id: `res_${data.roundId}_${data.playerId}`,
-          ...data
-        }
-      ];
+      return [...prev, { id: `res_${data.roundId}_${data.playerId}`, ...data }];
     });
   };
 
@@ -344,32 +426,39 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     roundId: string,
     scores: Array<{ playerId: string; gross: number; putts: number; ctp: boolean }>
   ) => {
+    const scoresToPersist = scores.map((s) => {
+      const player = players.find((p) => p.id === s.playerId);
+      return {
+        ...s,
+        hciSnapshot: player ? player.hci : 15.0
+      };
+    });
+
     setResults((prev) => {
       const copy = prev.filter((r) => r.roundId !== roundId);
-      const newEntries: RoundResult[] = scores
+      const newEntries: RoundResult[] = scoresToPersist
         .filter((s) => s.gross > 0)
-        .map((s) => {
-          const player = players.find((p) => p.id === s.playerId);
-          return {
-            id: `res_${roundId}_${s.playerId}`,
-            roundId,
-            playerId: s.playerId,
-            gross: s.gross,
-            putts: s.putts,
-            ctp: s.ctp,
-            hciSnapshot: player ? player.hci : 15.0
-          };
-        });
+        .map((s) => ({
+          id: `res_${roundId}_${s.playerId}`,
+          roundId,
+          playerId: s.playerId,
+          gross: s.gross,
+          putts: s.putts,
+          ctp: s.ctp,
+          hciSnapshot: s.hciSnapshot
+        }));
       return [...copy, ...newEntries];
     });
 
-    // Mark round status as completed if it had scores
     if (scores.some((s) => s.gross > 0)) {
       setRounds((prev) =>
         prev.map((r) => (r.id === roundId ? { ...r, status: 'completed' } : r))
       );
     }
-    showToast('Resultados guardados y calculados correctamente');
+
+    // Sync to PostgreSQL in background
+    remoteUpsertBulkResults(roundId, scoresToPersist);
+    showToast('Resultados guardados y sincronizados');
   };
 
   const deleteResult = (resultId: string) => {
@@ -388,11 +477,16 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
       return [...prev, { place, points }].sort((a, b) => a.place - b.place);
     });
-    showToast(`Puntos para lugar ${place} actualizados a ${points}`);
+    remoteUpsertPointsRule(place, points, activeTournament.id);
+    showToast(`Puntos actualizados para lugar ${place}`);
   };
 
   const updateSettings = (newSettings: Partial<AppSettings>) => {
-    setSettings((prev) => ({ ...prev, ...newSettings }));
+    setSettings((prev) => {
+      const updated = { ...prev, ...newSettings };
+      remoteUpsertSettings(updated);
+      return updated;
+    });
     showToast('Configuración actualizada');
   };
 
@@ -401,17 +495,17 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const toggleHci80 = (enabled: boolean) => {
-    setSettings((prev) => ({ ...prev, useHci80: enabled }));
+    updateSettings({ useHci80: enabled });
     showToast(
       enabled
-        ? 'Modalidad activada: Handicap al 80% (HCI × 0.8)'
-        : 'Modalidad activada: Handicap al 100% (HCI completo)'
+        ? 'Modalidad: Handicap al 80% (HCI × 0.8)'
+        : 'Modalidad: Handicap al 100% (HCI completo)'
     );
   };
 
   const setTiebreak = (tiebreak: TiebreakCriterion) => {
-    setSettings((prev) => ({ ...prev, tiebreak }));
-    showToast(`Criterio de desempate cambiado a: ${tiebreak}`);
+    updateSettings({ tiebreak });
+    showToast(`Criterio de desempate: ${tiebreak}`);
   };
 
   // Backup & Reset
@@ -425,13 +519,13 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setCtpRules(INITIAL_CTP_RULES);
     setLivRules(INITIAL_LIV_RULES);
     setSettings(INITIAL_SETTINGS);
-    showToast('Se restablecieron los datos originales del archivo Excel Los Santos 2026/27', 'info');
+    showToast('Se restablecieron los datos oficiales del Excel Los Santos 2026/27', 'info');
   };
 
   const importBackup = (backupData: any): boolean => {
     try {
       if (!backupData || !backupData.players || !backupData.rounds) {
-        showToast('El archivo de respaldo no tiene el formato válido', 'error');
+        showToast('El archivo de respaldo no tiene formato válido', 'error');
         return false;
       }
       if (backupData.tournaments) setTournaments(backupData.tournaments);
@@ -444,7 +538,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       showToast('Respaldo importado y cargado con éxito');
       return true;
     } catch (e) {
-      showToast('Error al importar el archivo', 'error');
+      showToast('Error al importar archivo', 'error');
       return false;
     }
   };
@@ -463,6 +557,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         livRules,
         settings,
         toasts,
+        isDbConnected,
         showToast,
         removeToast,
         setActiveTournamentId,
@@ -488,7 +583,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         toggleHci80,
         setTiebreak,
         resetToInitialData,
-        importBackup
+        importBackup,
+        refreshFromDatabase
       }}
     >
       {children}

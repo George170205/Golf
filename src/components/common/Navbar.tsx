@@ -9,15 +9,17 @@ import {
   RotateCcw,
   CheckCircle2,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Database
 } from 'lucide-react';
 import { exportBackupJson } from '../../utils/exportCsv';
 
 interface NavbarProps {
   onOpenNewTournamentModal: () => void;
+  onOpenDbModal: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenNewTournamentModal }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenNewTournamentModal, onOpenDbModal }) => {
   const {
     tournaments,
     activeTournament,
@@ -31,7 +33,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenNewTournamentModal }) => {
     rounds,
     results,
     pointsRules,
-    showToast
+    showToast,
+    isDbConnected
   } = useTournament();
 
   const [showTournamentDropdown, setShowTournamentDropdown] = useState(false);
@@ -183,6 +186,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenNewTournamentModal }) => {
         >
           <RotateCcw size={14} />
           <span>Reiniciar Datos</span>
+        </button>
+
+        {/* Botón de Base de Datos Centralizada */}
+        <button
+          onClick={onOpenDbModal}
+          className="btn btn-secondary btn-sm"
+          title={isDbConnected ? 'Base de datos PostgreSQL sincronizada' : 'Conectar PostgreSQL Centralizado'}
+          style={{
+            borderColor: isDbConnected ? 'rgba(22, 163, 74, 0.4)' : 'var(--border-subtle)',
+            background: isDbConnected ? 'rgba(22, 163, 74, 0.12)' : 'transparent',
+            color: isDbConnected ? 'var(--success)' : 'var(--text-muted)'
+          }}
+        >
+          <Database size={14} color={isDbConnected ? 'var(--success)' : 'var(--text-muted)'} />
+          <span>{isDbConnected ? 'Postgres Conectado' : 'Base de Datos'}</span>
         </button>
 
         {/* Tema Oscuro / Claro */}
